@@ -1,39 +1,33 @@
-import '../css/common.css';
-import '../css/03-feedback.css';
 import throttle from 'lodash.throttle';
+const feedbackForm = document.querySelector('.feedback-form');
+const emailInput = feedbackForm.querySelector('input[name="email"]');
+const messageInput = feedbackForm.querySelector('textarea[name="message"]');
 
-const STORAGE_KEY = 'feedback-form-state';
-const refs = {
-  form: document.querySelector('.feedback-form'),
-  textarea: document.querySelector('.feedback-form textarea'),
-  input: document.querySelector('input'),
-};
-const formData = {};
+feedbackForm.addEventListener(
+  'input',
+  throttle(() => {
+    const formState = {
+      email: emailInput.value,
+      message: messageInput.value,
+    };
 
-populateTextarea();
+    localStorage.setItem('feedback-form-state', JSON.stringify(formState));
+  }, 500)
+);
 
-refs.form.addEventListener('input', throttle(onTextareaInput, 500));
+const savedFormState = JSON.parse(localStorage.getItem('feedback-form-state'));
+emailInput.value = savedFormState?.email ?? '';
+messageInput.value = savedFormState?.message ?? '';
 
-refs.form.addEventListener('submit', e => {
-  e.preventDefault();
-  e.currentTarget.reset();
-  const objData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-  localStorage.removeItem(STORAGE_KEY);
+feedbackForm.addEventListener('submit', event => {
+  console.log('Form data:', {
+    email: emailInput.value,
+    message: messageInput.value,
+  });
+
+  localStorage.removeItem('feedback-form-state');
+  emailInput.value = '';
+  messageInput.value = '';
+
+  event.preventDefault();
 });
-
-function onTextareaInput(e) {
-  formData[e.target.name] = e.target.value;
-  const stringifiedData = JSON.stringify(formData);
-  localStorage.setItem(STORAGE_KEY, stringifiedData);
-}
-
-function populateTextarea() {
-  const savedMessage = JSON.parse(localStorage.getItem(STORAGE_KEY));
-
-  if (savedMessage === null) {
-    //console.log(savedMessage);
-    return;
-  }
-  refs.textarea.value = savedMessage['message'] || '';
-  refs.input.value = savedMessage['email'] || '';
-}
